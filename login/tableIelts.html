@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý lớp học</title>
+    <style>
+        body {
+            font-family:'Courier New', Courier, monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex; 
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 50px;
+            background-color: #f4f7fb;
+        }
+
+        /* Thêm iframe-container vào style chung */
+        .form-container, .table-container, .iframe-container {
+            background: white;
+            padding: 50px 50px; 
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-container {
+            width: 400px;
+            display: none; 
+            margin-right: 40px;
+        }
+
+        .table-container {
+            width: 90%;
+            max-width: fit-content;
+            display: block; 
+        }
+        
+        /* Style cho khung chứa Iframe (ẩn ban đầu) */
+        .iframe-container {
+            width: 90%; 
+            display: none;
+            min-width: 800px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .left {
+            width: 150px;
+            font-weight: bold;
+        }
+
+        .right input,
+        .right select {
+            width: 250px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin-right: 20px;
+            background-color: #3EAEF4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        table {
+            width: 870px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 8px 14px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #3EAEF4;
+            color: white;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="table-container" id="bangIn4">
+        <h2>Danh sách lớp học</h2>
+        <table id="infoTable">
+            <thead>
+                <tr>
+                    <th>MaLop</th>
+                    <th>Tên lớp</th>
+                    <th>Học phí</th>
+                    <th>Ngày khai giảng</th>
+                    <th>Số buổi học</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="row">
+            <br>
+                <button id="addInfo">Thêm</button>
+            </br>
+        </div>
+    </div>
+    
+    <div class="form-container" id="formContainer">
+        <h2>Nhập thông tin lớp học</h2>
+        <div class="row"><div class="left">Mã lớp</div><div class="right"><input type="text" id="code"></div></div>
+        <div class="row"><div class="left">Tên lớp</div><div class="right"><input type="text" id="name"></div></div>
+        <div class="row"><div class="left">Học phí</div><div class="right"><input type="money" id="money"></div></div>
+        <div class="row"><div class="left">Ngày khai giảng</div><div class="right"><div class="right"><input type="date" id="dateBegin"></div></div></div>
+        <div class="row"><div class="left">Số buổi học</div><div class="right"><input type="number" id="quantity"></div></div>
+        <div class="row"><button id="save">Lưu</button></div>
+    </div>
+
+    <div class="iframe-container" id="iframeHolder">
+        <h2 id="iframeTitle">Quản lý điểm - Báo cáo</h2>
+        <button id="backFromIframe" style="margin-bottom: 15px; width: 120px;">Quay lại</button>
+        <iframe id="reportFrame" src="" style="width:100%; height:500px; border:none;"></iframe>
+    </div>
+
+    <script>
+        document.getElementById("addInfo").onclick = function () {
+            document.getElementById("bangIn4").style.display = "none";
+            document.getElementById("formContainer").style.display = "block";
+        };
+
+        document.getElementById("backFromIframe").onclick = function() {
+            document.getElementById("iframeHolder").style.display = "none";
+            document.getElementById("bangIn4").style.display = "block";
+        };
+
+        // Xử lý nút Lưu
+        document.getElementById("save").onclick = function () {
+            const maL = document.getElementById("code").value;
+            const tenL = document.getElementById("name").value;
+            const hocPhi = document.getElementById("money").value;
+            const ngayKhaiGiang = document.getElementById("dateBegin").value;
+            const soBuoiHoc = document.getElementById("quantity").value;
+
+            if (!maL || !tenL || !hocPhi || !ngayKhaiGiang || !soBuoiHoc) {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+            const table = document.getElementById("infoTable").getElementsByTagName("tbody")[0];
+            const newRow = table.insertRow();
+            newRow.insertCell(0).innerText = maL;
+            newRow.insertCell(1).innerText = tenL;
+            newRow.insertCell(2).innerText = hocPhi;
+            newRow.insertCell(3).innerText = ngayKhaiGiang;
+            newRow.insertCell(4).innerText = soBuoiHoc;
+
+            const actionCell = newRow.insertCell(5);
+            actionCell.style.display = "flex";
+            actionCell.style.gap = "5px"; 
+
+            const editButtonF = document.createElement("button");
+            editButtonF.innerText = "Sửa";
+            editButtonF.classList.add("edit-btn");
+            actionCell.appendChild(editButtonF);
+
+            const editButtonA = document.createElement("button");
+            editButtonA.innerText = "Nhập điểm";
+            editButtonA.classList.add("edit-btn");
+            actionCell.appendChild(editButtonA);
+            
+            editButtonF.onclick = function () {
+                alert("Chức năng sửa sẽ được thêm sau!");
+            };
+
+            editButtonA.onclick = function(){
+                // 1. Ẩn bảng danh sách
+                document.getElementById("bangIn4").style.display = "none";
+                const iframeDiv = document.getElementById("iframeHolder");
+                iframeDiv.style.display = "block";
+                document.getElementById("iframeTitle").innerText = "Nhập điểm cho lớp: " + maL;
+                const frame = document.getElementById("reportFrame");
+                const newSrc = "quanLyDiem_baoCao.html?maLop=" + encodeURIComponent(maL);
+                if(frame.contentWindow.location.href.indexOf(newSrc) === -1) {
+                     frame.src = newSrc;
+                }
+            }
+            // --------------------------------
+
+            alert("Thêm thông tin thành công!");
+
+            // Ẩn form, hiện bảng
+            document.getElementById("formContainer").style.display = "none";
+            document.getElementById("bangIn4").style.display = "block";
+
+            document.querySelectorAll("#formContainer input, #formContainer select").forEach(el => el.value = "");
+        };
+    </script>
+
+</body>
+</html>
