@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang = "vi">
+    <head>
+        <meta charset = "UTF-8">
+        <meta name = "viewport" content = "width=device-width, initial-scale = 1.0">
+        <title>Trang chủ học viên</title>
+        <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+        <style>
+            /*Thiết lập chung và font chữ*/
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f9;
+                display: block;
+                min-height: 100vh;
+            }
+
+            .container{
+                width: 1400px;
+                min-height: 650px;
+                background-color: #fff;
+                padding: 20px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                border-radius: 8px;
+                margin: 20px auto;
+            }
+
+            /*Phần tiêu đề*/
+            .header{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            /*Thay đổi: thêm ID và đặt màu mặc định cho tiêu đề*/
+            .header-title{
+                background-color: #fce4ec; /*hồng nhạt*/
+                color: #d81b60;
+                padding: 20px 80px;
+                border-radius: 8px;
+                border: 1px solid #d81b60;
+                font-size: 30px;
+                font-weight: bold;
+            }
+
+            .user-info{
+                background-color: #bfa88c;
+                color: #fff;
+                padding: 20px 80px;
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                font-size: 30px;
+            }
+
+            .user-info i{
+                margin-left: 20px;
+                font-size: 24px;
+            } 
+
+            /*Nội dung chính*/
+            .main-content {
+                display: flex; 
+            }
+
+            /*Thanh điều hướng*/
+            .sidebar {
+                width: 150px;
+                display: flex;
+                flex-direction: column;
+                gap: 25px;
+                margin-right: 20px;
+            }
+
+            .item{
+                border: none;
+                padding: 40px 20px;
+                border-radius: 5px;
+                text-align: center;
+                cursor: pointer;
+                font-size: 20px;
+                font-weight: bold;
+                color: #fff;
+                transition: background-color 0.3s;
+            }
+
+            /*Màu cho nút*/
+            .item[data-content = "Thông tin"] {background-color: #4db6ac;}
+            .item[data-content = "Lớp học"] {background-color: #4db6ac;}
+            .item[data-content = "Thông báo"] {background-color: #4db6ac;}
+            .item.logout {background-color: #66bb6a;} /*Đăng xuất*/
+            .item:hover, .item.active {
+                opacity: 0.9;
+            }
+
+            /*Khu vực hiển thị nội dung*/
+            .content-section {
+                display: none; /*Ẩn đi*/
+            }
+            .content-section.active{
+                display: block; /*Hiển thị ra*/
+            }
+            .content-area{
+                flex-grow: 1;
+            }
+
+            /*Bảng lớp học*/
+            .class-table{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+
+            .class-table th, .class-table td{
+                border: 1px solid #ddd;
+                padding: 8px 10px;
+                text-align: left;
+                font-size: 14px;
+                vertical-align: middle;
+            }
+
+            .class-table th{
+                background-color: #f2f2f2;
+            }
+
+            /*Xem lịch học*/
+            .schedule-btn{
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+            }
+
+            .schedule-btn:hover{
+                background-color: #0056b3;
+            }
+
+            /*Chi tiết lịch học*/
+            .schedule-details-container {
+                margin-top: 20px;
+                border-top: 2px solid #eee;
+                padding-top: 15px;
+            }
+
+            .schedule-detail-content{
+                display: none; /*Mặc định ẩn*/
+            }
+
+            /*Danh sách buổi học*/
+            .session-list{
+                list-style-type: none;
+                padding-left: 0;
+            }
+
+            .session-item{
+                padding: 8px;
+                margin-bottom: 5px;
+                background-color: #f9f9f9;
+                border: 1px solid #eee;
+                border-radius: 4px;
+                cursor: pointer; /*Cho phép bấm vào từng buổi*/
+            }
+
+            .session-item:hover{
+                background-color: #e9e9e9;
+            }
+
+            /*Trạng thái đã gửi*/
+            .session-item.submitted {
+                background-color: #e0e0e0; /* Nền xám */
+                color: #888; /* Chữ mờ */
+                cursor: not-allowed; /* Con chuột báo cấm */
+                pointer-events: none; /* Khóa không cho bấm chuột nữa */
+                text-decoration: line-through; /* Gạch ngang chữ */
+                border-color: #ccc;
+            }
+            /*CSS cho POPUP (MODAL)*/
+            .modal-overlay {
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                background: rgba(0, 0, 0, 0.5); /* Nền tối mờ */
+                display: none; /* Mặc định ẩn */
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+
+            .modal-box {
+                background: white;
+                padding: 25px;
+                border-radius: 8px;
+                width: 500px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                text-align: center;
+                position: relative;
+            }
+
+            .modal-title {
+                margin-top: 0;
+                color: #d81b60;
+                font-size: 22px;
+            }
+
+            .modal-session-info {
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 15px;
+                display: block;
+            }
+
+            .modal-textarea {
+                width: 100%;
+                height: 80px;
+                margin-bottom: 15px;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                resize: none; /* Không cho kéo giãn */
+                font-family: Arial, sans-serif;
+                box-sizing: border-box; /* Đảm bảo padding không làm vỡ khung */
+            }
+
+            .modal-btn {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+                color: white;
+            }
+
+            .btn-send { background-color: #28a745; margin-right: 10px; }
+            .btn-send:hover { background-color: #218838; }
+            .btn-cancel { background-color: #dc3545; }
+            .btn-cancel:hover { background-color: #c82333; }
+
+            /*Thông báo*/
+            .notif-list { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 15px; 
+            } /* Khoảng cách giữa các thông báo */
+        
+            .notif-item {
+                background-color: #f5f5f5; /* Nền xám */
+                border: 1px solid #ddd;
+                border-left: 5px solid #d81b60; 
+                padding: 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+            }
+
+            .notif-item:hover {
+                background-color: #e0e0e0; 
+                transform: translateX(5px); 
+            }
+
+            .notif-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+
+            .notif-title { 
+                font-size: 18px; 
+                font-weight: bold; 
+                color: #333; 
+            }
+            .notif-date { 
+                font-size: 14px; 
+                color: #777; 
+                font-style: italic; 
+            }
+            .notif-preview { 
+                font-size: 14px; 
+                color: #555; 
+                margin: 0; 
+            }
+            .notif-content-full {
+                text-align: left; 
+                max-height: 300px;
+                overflow-y: auto;
+                border: 1px solid #eee;
+                padding: 10px;
+                margin: 15px 0;
+                background: #fafafa;
+            }
+
+            /*Thông tin*/
+            .info-box {
+                background-color: #fff;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 20px 40px;
+                max-width: 800px; 
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            .info-row {
+                display: flex;
+                padding: 15px 0;
+                border-bottom: 1px solid #eee; 
+                align-items: center;
+            }
+
+            .info-row:last-child {
+                border-bottom: none; 
+            }
+
+            .info-label {
+                width: 200px; 
+                font-weight: bold;
+                color: #555;
+                display: flex;
+                align-items: center;
+                gap: 10px; 
+            }
+
+            .info-label i {
+                color: #4db6ac; 
+                width: 20px;
+                text-align: center;
+            }
+
+            .info-value {
+                flex-grow: 1; 
+                color: #333;
+                font-size: 16px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class = "container">
+            <header class = "header">
+                <div class = "header-title" id = "main-header-title">Thông báo</div>
+                <div class = "user-info">
+                    <span>Tên học viên</span>
+                    <i class = "fas fa-user-circle"></i>
+                </div>
+            </header>
+
+            <main class = "main-content">
+                <nav class = "sidebar">
+                    <button class = "item" data-content = "Thông tin">Thông tin</button>
+                    <button class = "item" data-content = "Lớp học">Lớp học</button>
+                    <button class = "item active" data-content = "Thông báo">Thông báo</button>
+                    <button class = "item logout" id = "logout-btn">Đăng xuất</button>
+                </nav>
+
+                <section class = "content-area">
+                    <div id="Thông tin" class="content-section">
+                        <h3>Thông tin cá nhân học viên</h3>
+    
+                        <div class="info-box">
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-id-card"></i> Mã học viên:</span>
+                                <span class="info-value">HV2025001</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-user"></i> Họ và tên:</span>
+                                <span class="info-value" style="font-weight: bold; color: #d81b60;">Nguyễn Bách Khoa</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-birthday-cake"></i> Ngày sinh:</span>
+                                <span class="info-value">15/08/2005</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-venus-mars"></i> Giới tính:</span>
+                                <span class="info-value">Nam</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-map-marker-alt"></i> Địa chỉ:</span>
+                                <span class="info-value">Số 1, Đại Cồ Việt, Hai Bà Trưng, Hà Nội</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-phone-alt"></i> SĐT học viên:</span>
+                                <span class="info-value">0909 123 456</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-users"></i> SĐT phụ huynh:</span>
+                                <span class="info-value">0918 888 999 (Mẹ)</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fas fa-envelope"></i> Email:</span>
+                                <span class="info-value">nguyenvana@student.edu.vn</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id = "Lớp học" class = "content-section">
+                        <h3>Các lớp học của học viên</h3>
+                        <table class = "class-table">
+                            <thead>
+                                <tr>
+                                    <th>Lớp học</th>
+                                    <th>Ngày đăng ký</th>
+                                    <th>Ngày bắt đầu</th>
+                                    <th>Ngày kết thúc</th>
+                                    <th>Lịch học</th>
+                                    <th>Học phí</th>
+                                    <th>Giáo viên</th>
+                                    <th>Điểm số</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>IELTS GRAMMAR</td>
+                                    <td>01/09/2025</td>
+                                    <td>10/09/2025</td>
+                                    <td>10/12/2025</td>
+                                    <td>
+                                        <button class="schedule-btn" data-target="schedule-cs101">Xem chi tiết</button>
+                                    </td>
+                                    <td>3.000.000đ</td>
+                                    <td>Nguyễn Văn A</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>IELTS SPEAKING</td>
+                                    <td>15/05/2025</td>
+                                    <td>01/06/2025</td>
+                                    <td>01/09/2025</td>
+                                    <td>
+                                        <button class="schedule-btn" data-target="schedule-db202">Xem chi tiết</button>
+                                    </td>
+                                    <td>2.500.000đ</td>
+                                    <td>Trần Thị B</td>
+                                    <td>A</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div id = "schedule-details" class = "schedule-details-container">
+                            <div id="schedule-cs101" class="schedule-detail-content">
+                                <h4>Chi tiết lịch học: IELTS GRAMMAR</h4>
+                                <ul class="session-list">
+                                    <li class="session-item" data-session="cs101-b1">Buổi 1: Giới thiệu IELTS (10/09/2025)</li>
+                                    <li class="session-item" data-session="cs101-b2">Buổi 2: Hiện tại đơn (13/09/2025)</li>
+                                    <li class="session-item" data-session="cs101-b3">Buổi 3: Hiện tại tiếp diễn (17/09/2025)</li>
+                                </ul>
+                            </div>
+                        
+                            <div id="schedule-db202" class="schedule-detail-content">
+                                <h4>Chi tiết lịch học: IELTS SPEAKING</h4>
+                                <ul class="session-list">
+                                    <li class="session-item" data-session="db202-b1">Buổi 1: Giới thiệu IELTS (01/06/2025)</li>
+                                    <li class="session-item" data-session="db202-b2">Buổi 2: Pronunciation (04/06/2025)</li>
+                                    <li class="session-item" data-session="db202-b3">Buổi 3: Vocabulary (08/06/2025)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="Thông báo" class="content-section active">
+                        <h3>Thông báo từ trung tâm</h3>
+                        <div class="notif-list">
+                            <div class="notif-item" 
+                                data-full-text="Kính gửi các bạn học viên,<br><br>Nhà trường xin thông báo lịch nghỉ lễ Quốc Khánh 02/09 như sau:<br>- Thời gian nghỉ: Từ ngày 01/09/2025 đến hết ngày 04/09/2025.,<br>- Thời gian đi học lại: Thứ Hai, ngày 05/09/2025.<br><br>Trong thời gian nghỉ lễ, văn phòng giáo vụ sẽ tạm ngưng hoạt động. Chúc các bạn và gia đình có một kỳ nghỉ vui vẻ và an toàn!<br><br>Trân trọng,<br>Ban Giám Hiệu.">
+                                <div class="notif-header">
+                                    <span class="notif-title">📣 Thông báo lịch nghỉ lễ Quốc Khánh 2/9</span>
+                                    <span class="notif-date">28/08/2025</span>
+                                </div>
+                                <p class="notif-preview">Nhà trường thông báo lịch nghỉ lễ Quốc Khánh từ ngày 01/09...</p>
+                            </div>
+
+                            <div class="notif-item" 
+                                data-full-text="Thân gửi học viên Nguyễn Văn A,<br><br>Hệ thống ghi nhận bạn vẫn chưa hoàn thành học phí cho khóa học IELTS Speaking (Mã lớp: DB202).<br><br>Vui lòng hoàn tất đóng học phí trước ngày 10/06/2025 để đảm bảo quyền lợi tham gia thi cuối khóa.<br>Thông tin chuyển khoản:<br>- Ngân hàng: MB Bank<br>- STK: 99998888<br>- Nội dung: TenHocVien_MaLop<br><br>Nếu bạn đã đóng, vui lòng bỏ qua thông báo này hoặc liên hệ phòng tài chính.">
+                                <div class="notif-header">
+                                    <span class="notif-title">⚠️ Nhắc nhở đóng học phí đợt 2</span>
+                                    <span class="notif-date">03/06/2025</span>
+                                </div>
+                                <p class="notif-preview">Vui lòng hoàn tất đóng học phí trước ngày 10/06/2025...</p>
+                            </div>
+
+                            <div class="notif-item" 
+                                data-full-text="Chào các bạn,<br><br>Lịch thi cuối khóa lớp IELTS GRAMMAR đã chính thức được ấn định:<br>- Ngày thi: 15/12/2025<br>- Giờ thi: 08:30 Sáng<br>- Phòng thi: P.301, Tòa nhà A<br><br>Lưu ý:<br>1. Học viên có mặt trước 15 phút.<br>2. Mang theo CCCD hoặc Thẻ học viên.<br>3. Không được sử dụng tài liệu trong phòng thi.<br><br>Chúc các bạn ôn thi thật tốt!">
+                                <div class="notif-header">
+                                    <span class="notif-title">📅 Lịch thi cuối khóa lớp Grammar</span>
+                                    <span class="notif-date">01/12/2025</span>
+                                </div>
+                                <p class="notif-preview">Lịch thi cuối khóa sẽ diễn ra vào ngày 15/12/2025...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+        <div id="absence-modal" class="modal-overlay">
+            <div class="modal-box">
+                <h3 class="modal-title">Đơn xin nghỉ phép</h3>
+                <span id="modal-session-name" class="modal-session-info">...</span>
+                <textarea id="absence-reason" class="modal-textarea" placeholder="Nhập lý do xin nghỉ của bạn..."></textarea>
+                <div class="modal-buttons">
+                    <button id="btn-submit-absence" class="modal-btn btn-send">Gửi đơn</button>
+                    <button id="btn-close-modal" class="modal-btn btn-cancel">Hủy</button>
+                </div>
+            </div>
+        </div>
+        <div id="notification-modal" class="modal-overlay">
+            <div class="modal-box">
+                <h3 id="notif-modal-title" class="modal-title">Tiêu đề thông báo</h3>
+                <span id="notif-modal-date" style="color: #777; font-size: 14px; display: block; margin-bottom: 10px;">Ngày</span>
+                <hr style="border: 0; border-top: 1px solid #eee;">
+                <div id="notif-modal-content" class="notif-content-full"></div>
+                <button id="btn-close-notif" class="modal-btn btn-cancel" style="background-color: #666;">Đóng</button>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                //Lấy các phần tử điều hướng chính
+                const items = document.querySelectorAll('.item:not(.logout)');
+                const mainHeaderTitle = document.getElementById('main-header-title');
+                const logoutBtn = document.getElementById('logout-btn');
+                const contentSections = document.querySelectorAll('.content-section');
+
+                //Lấy các phần tử tương tác trong Lớp học
+                const scheduleButtons = document.querySelectorAll('.schedule-btn');
+                const scheduleDetailContents = document.querySelectorAll('.schedule-detail-content');
+                const sessionItems = document.querySelectorAll('.session-item');
+
+                //Lấy các phần tử xử lý xin nghỉ
+                const modalAbsence = document.getElementById('absence-modal');
+                const modalSessionName = document.getElementById('modal-session-name');
+                const reasonInput = document.getElementById('absence-reason');
+                const btnSubmit = document.getElementById('btn-submit-absence');
+                const btnClose = document.getElementById('btn-close-modal');
+                let currentSessionItem = null;
+                //Thông báo
+                const modalNotif = document.getElementById('notification-modal');
+                const notifItems = document.querySelectorAll('.notif-item');
+                const notifModalTitle = document.getElementById('notif-modal-title');
+                const notifModalDate = document.getElementById('notif-modal-date');
+                const notifModalContent = document.getElementById('notif-modal-content');
+                const btnCloseNotif = document.getElementById('btn-close-notif');
+
+                //Hàm xử lý sự kiện click
+                items.forEach(item => {
+                    item.addEventListener('click', () => {
+                        const targetId = item.getAttribute('data-content');
+                        const targetContent = document.getElementById(targetId);
+                        const newHeaderTitle = item.textContent;
+                        mainHeaderTitle.textContent = newHeaderTitle;
+
+                        //Ẩn tất cả nội dung và bỏ active
+                        contentSections.forEach(section => section.classList.remove('active'));
+                        items.forEach(i => i.classList.remove('active'));
+
+                        //Hiển thị nội dung được chọn
+                        if(targetContent) {
+                            targetContent.classList.add('active');
+                        }
+                        item.classList.add('active');
+
+                        //Khi chuyển tab, ẩn hết các lịch học chi tiết
+                        scheduleDetailContents.forEach(content => {
+                            content.style.display = 'none';
+                        });
+                    });
+                });
+                //Xử lý nút đăng xuất
+                if (logoutBtn){
+                    logoutBtn.addEventListener('click',() => {
+                      //Yêu cầu đăng xuất
+                        alert('Bạn đã đăng xuất thành công!');
+                    });
+                }
+
+                //Xử lý nút "xem chi tiết" lịch học
+                scheduleButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        //Lấy ID mục tiêu từ data-target
+                        const targetId = button.getAttribute('data-target');
+                        const targetSchedule = document.getElementById(targetId);
+                        //Ẩn tất cả các lịch học chi tiết khác
+                        scheduleDetailContents.forEach(content => {
+                            content.style.display = 'none';
+                        });
+                        //Hiển thị lịch học tương ứng
+                        if(targetSchedule){
+                            targetSchedule.style.display = 'block';
+                        }
+                    });
+                });
+
+                //Xử lý click vào từng buổi học
+                sessionItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        // Kiểm tra: Nếu đã nộp rồi (có class submitted) thì không làm gì cả
+                        if (item.classList.contains('submitted')) return;
+                        //Lưu lại buổi học đang bấm vào biến currentSessionItem
+                        currentSessionItem = item;
+                        modalSessionName.textContent = item.textContent; //Lấy nội dung
+                        reasonInput.value = ""; //Xóa lý do cũ
+                        modalAbsence.style.display = "flex";
+                    });
+                });
+                
+                // Khi bấm nút "Gửi đơn"
+                btnSubmit.addEventListener('click', () => {
+                    const reason = reasonInput.value.trim();
+                    if (reason === "") {
+                        alert("Vui lòng nhập lý do xin nghỉ!");
+                        return;
+                    }
+                    // Giả lập gửi thành công
+                    alert("Đã gửi đơn xin nghỉ thành công!\n\nBuổi: " + modalSessionName.textContent + "\nLý do: " + reason);
+
+                    //ĐÁNH DẤU LÀ ĐÃ NỘP
+                    if (currentSessionItem) {
+                        currentSessionItem.classList.add('submitted'); // Thêm class CSS
+                        // Thêm chữ (Đã gửi) vào sau tên buổi học
+                        currentSessionItem.innerHTML += " <b>(Đã gửi đơn)</b>";
+                    }
+                    modalAbsence.style.display = "none"; // Đóng popup
+                });
+
+                // Khi bấm nút "Hủy"
+                btnClose.addEventListener('click', () => {
+                    modalAbsence.style.display = "none";
+                });
+
+                //Xử lý Popup Thông báo
+                notifItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        // Lấy dữ liệu từ thẻ HTML
+                        const title = item.querySelector('.notif-title').textContent;
+                        const date = item.querySelector('.notif-date').textContent;
+                        const fullText = item.getAttribute('data-full-text');
+                        // Gán vào Popup
+                        notifModalTitle.textContent = title;
+                        notifModalDate.textContent = date;
+                        notifModalContent.innerHTML = fullText;
+                        // Hiện Popup
+                        modalNotif.style.display = "flex";
+                    });
+                });
+
+                //Đóng Popup Thông báo
+                btnCloseNotif.addEventListener('click', () => {
+                    modalNotif.style.display = "none"
+                });
+
+                // Đóng popup khi bấm ra ngoài vùng trắng
+                window.addEventListener('click', (e) => {
+                    if (e.target === modalAbsence) modalAbsence.style.display = "none";
+                    if (e.target === modalNotif) modalNotif.style.display = "none";
+                });
+
+                //Thiết lập mặc định là thông báo
+                const defaultItem = items[2];
+                if(defaultItem) {
+                    defaultItem.click();
+                }
+            });
+        </script>
+    </body>
+</html>
