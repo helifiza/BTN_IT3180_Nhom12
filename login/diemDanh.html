@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý điểm danh & Báo cáo</title>
+<style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .hidden { display: none !important; } /* Force hidden */
+    
+    /* --- CSS GIAO DIỆN CHÍNH --- */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #eee; }
+    .class-name { color: green; cursor: pointer; font-weight: bold; text-decoration: underline; }
+    .button {
+        padding: 8px 16px; border: none; border-radius: 6px;
+        background: #3EAEF4; color: white; cursor: pointer; margin-right: 5px;
+    }
+    .button:hover { background: #2a93d5; }
+    .btn-report {
+        background-color: #f0ad4e; color: white; padding: 5px 10px;
+        border: none; border-radius: 4px; cursor: pointer;
+    }
+    .btn-report.has-data {
+        background-color: #28a745; /* Màu xanh lá nếu đã có báo cáo */
+    }
+    input[type="text"], input[type="date"] { padding: 5px; margin-bottom: 10px; }
+
+    /* --- CSS MODAL BÁO CÁO (GIỐNG HÌNH ẢNH) --- */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 1000;
+    }
+
+    .report-box {
+        width: 600px;
+        background-color: #63cafa; /* Màu nền xanh sáng */
+        border-radius: 4px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        position: relative;
+    }
+
+    /* Header của Modal */
+    .report-header {
+        position: relative;
+        text-align: center;
+        padding: 15px;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .btn-save-report {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        background-color: #166ba6; /* Màu xanh đậm nút Lưu */
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        text-transform: uppercase;
+    }
+    .btn-save-report:hover { background-color: #0f5385; }
+    
+    /* Nút đóng (X) để thoát nếu không muốn lưu */
+    .btn-close-modal {
+        position: absolute; left: 15px; top: 15px;
+        background: none; border: none; color: white; font-size: 20px; cursor: pointer;
+    }
+
+    /* Body của Modal */
+    .report-body {
+        padding: 20px;
+    }
+
+    .student-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .student-row label {
+        width: 120px;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: black;
+    }
+
+    .student-input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        background: white;
+        font-weight: bold;
+    }
+
+    /* Khung nhận xét */
+    .comment-section {
+        border: 1px solid #166ba6;
+        border-radius: 5px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .comment-header {
+        background-color: #166ba6; /* Màu xanh đậm tiêu đề Nhận xét */
+        color: white;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .comment-textarea {
+        width: 100%;
+        height: 200px;
+        border: none;
+        padding: 10px;
+        box-sizing: border-box;
+        resize: none;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        outline: none;
+    }
+
+    /* Footer xanh đậm dưới cùng */
+    .report-footer {
+        height: 40px;
+        background-color: #166ba6;
+        width: 100%;
+    }
+</style>
+</head>
+<body>
+
+<!-- Giao diện 1: Danh sách các buổi điểm danh -->
+<div id="tableView">
+    <h2>Danh sách các buổi điểm danh</h2>
+    <button class="button" onclick="openAddAttendance()">Thêm điểm danh mới</button>
+
+    <table id="attendanceTable">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Ngày học</th>
+                <th>Tên lớp</th>
+                <th>Giáo viên</th>
+                <th>Đi học</th>
+                <th>Nghỉ</th>
+                <th>Sĩ số</th>
+            </tr>
+        </thead>
+        <tbody id="classList"></tbody>
+    </table>
+</div>
+
+<!-- Giao diện 2: Form điểm danh chi tiết -->
+<div id="detailView" class="hidden">
+    <h2 id="formTitle">Thực hiện điểm danh</h2>
+
+    <h4>Thông tin chung</h4>
+    <label>Ngày học: </label><input type="date" id="ngay">
+    <label style="margin-left: 20px">Tên lớp: </label><input type="text" id="tenLop">
+    <label style="margin-left: 20px">Giáo viên: </label><input type="text" id="giaoVien">
+
+    <h4>Danh sách học viên</h4>
+    <table id="studentTable">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Học viên</th>
+                <th>Đi học</th>
+                <th>Nghỉ phép</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="studentList"></tbody>
+    </table>
+
+    <br>
+    <button class="button" onclick="saveAttendance()">Lưu thông tin lớp học</button>
+    <button class="button" onclick="closeDetail()" style="background: #ccc; color: #333;">Quay lại</button>
+</div>
+
+<!-- Giao diện 3: MODAL BÁO CÁO (Popup) -->
+<div id="reportModal" class="modal-overlay hidden">
+    <div class="report-box">
+        <!-- Header -->
+        <div class="report-header">
+            <button class="btn-close-modal" onclick="closeReportModal()">&#10005;</button>
+            Báo cáo
+            <button class="btn-save-report" onclick="saveCurrentReport()">LƯU</button>
+        </div>
+
+        <!-- Body -->
+        <div class="report-body">
+            <div class="student-row">
+                <label>HỌC VIÊN :</label>
+                <input type="text" id="modalStudentName" class="student-input" readonly>
+            </div>
+
+            <div class="comment-section">
+                <div class="comment-header">NHẬN XÉT</div>
+                <textarea id="modalReportContent" class="comment-textarea"></textarea>
+            </div>
+        </div>
+
+        <!-- Footer trang trí -->
+        <div class="report-footer"></div>
+    </div>
+</div>
+
+<script>
+    // Dữ liệu
+    let classes = []; 
+    let editingIndex = null; 
+    const sampleStudents = [
+        "Ngô Đức Bảo", "Hoàng Uyên Phương", "Đinh Thảo My",
+        "Lê Nguyễn Bảo Lâm", "Đào Đức Minh", "Nguyễn Trung Hiếu",
+        "Nguyễn Hải Yến", "Phùng Phương Anh"
+    ];
+
+    // Biến tạm lưu trữ báo cáo khi đang thao tác (trước khi bấm Lưu ở màn hình chính)
+    // Key là index của học sinh, Value là nội dung báo cáo
+    let tempReports = {}; 
+    let currentReportStudentIndex = null; // Đang báo cáo cho học sinh nào
+
+    // --- CÁC HÀM ĐIỀU HƯỚNG ---
+
+    function openAddAttendance() {
+        editingIndex = null;
+        document.getElementById("formTitle").innerText = "Thêm điểm danh mới";
+        document.getElementById("ngay").valueAsDate = new Date();
+        document.getElementById("tenLop").value = "Lớp Tiếng Anh";
+        document.getElementById("giaoVien").value = "";
+        
+        tempReports = {}; // Reset báo cáo tạm
+        toggleViews(false);
+        loadStudentTable(); 
+    }
+
+    function toggleViews(showList) {
+        if (showList) {
+            document.getElementById("tableView").classList.remove("hidden");
+            document.getElementById("detailView").classList.add("hidden");
+        } else {
+            document.getElementById("tableView").classList.add("hidden");
+            document.getElementById("detailView").classList.remove("hidden");
+        }
+    }
+
+    // --- XỬ LÝ BẢNG HỌC VIÊN ---
+
+    function loadStudentTable(studentDetails = null) {
+        const tbody = document.getElementById("studentList");
+        tbody.innerHTML = "";
+
+        // Nếu đang sửa, lấy dữ liệu từ studentDetails, nếu mới thì lấy từ sampleStudents
+        const listToRender = studentDetails ? studentDetails : sampleStudents.map(name => ({
+            name: name, diHoc: false, nghiPhep: false, report: ""
+        }));
+
+        // Nếu đang sửa (studentDetails tồn tại), ta cần đổ dữ liệu report vào biến tạm tempReports
+        if(studentDetails) {
+            tempReports = {};
+            studentDetails.forEach((st, idx) => {
+                if(st.report) tempReports[idx] = st.report;
+            });
+        }
+
+        listToRender.forEach((student, index) => {
+            const diHocChecked = student.diHoc ? "checked" : "";
+            const nghiPhepChecked = student.nghiPhep ? "checked" : "";
+            
+            // Kiểm tra xem có báo cáo chưa để đổi màu nút
+            const hasReportClass = (tempReports[index] || student.report) ? "has-data" : "";
+
+            const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td style="text-align:left; padding-left:15px;">${student.name}</td>
+                    <td><input type="checkbox" class="cb-dihoc" index="${index}" ${diHocChecked} onchange="handleCheck(${index}, 'dihoc')"></td>
+                    <td><input type="checkbox" class="cb-nghiphep" index="${index}" ${nghiPhepChecked} onchange="handleCheck(${index}, 'nghiphep')"></td>
+                    <td>
+                        <button id="btn-report-${index}" class="btn-report ${hasReportClass}" onclick="openReportModal(${index}, '${student.name}')">Báo cáo</button>
+                    </td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML("beforeend", row);
+        });
+    }
+
+    function handleCheck(index, type) {
+        const dihocCB = document.querySelector(`.cb-dihoc[index="${index}"]`);
+        const nghiphepCB = document.querySelector(`.cb-nghiphep[index="${index}"]`);
+        if (type === 'dihoc' && dihocCB.checked) nghiphepCB.checked = false;
+        else if (type === 'nghiphep' && nghiphepCB.checked) dihocCB.checked = false;
+    }
+
+    // --- XỬ LÝ MODAL BÁO CÁO ---
+
+    function openReportModal(index, studentName) {
+        currentReportStudentIndex = index;
+        document.getElementById("modalStudentName").value = studentName;
+        
+        // Load nội dung cũ nếu có
+        const oldContent = tempReports[index] || "";
+        document.getElementById("modalReportContent").value = oldContent;
+
+        document.getElementById("reportModal").classList.remove("hidden");
+    }
+
+    function closeReportModal() {
+        document.getElementById("reportModal").classList.add("hidden");
+    }
+
+    function saveCurrentReport() {
+        const content = document.getElementById("modalReportContent").value.trim();
+        
+        // Lưu vào biến tạm
+        tempReports[currentReportStudentIndex] = content;
+
+        // Đổi màu nút để báo hiệu đã có báo cáo
+        const btn = document.getElementById(`btn-report-${currentReportStudentIndex}`);
+        if(content) {
+            btn.classList.add("has-data");
+        } else {
+            btn.classList.remove("has-data"); // Nếu xóa trống thì bỏ màu xanh
+        }
+
+        closeReportModal();
+    }
+
+    // --- LƯU VÀ HIỂN THỊ DANH SÁCH LỚP ---
+
+    function saveAttendance() {
+        const ngay = document.getElementById("ngay").value;
+        const tenLop = document.getElementById("tenLop").value.trim();
+        const giaoVien = document.getElementById("giaoVien").value.trim();
+
+        if (!ngay || !tenLop || !giaoVien) {
+            alert("Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
+
+        const tbody = document.getElementById("studentList");
+        const rows = tbody.querySelectorAll("tr");
+        let currentDetails = [];
+        let countDiHoc = 0;
+        let countNghi = 0;
+
+        rows.forEach((row, i) => {
+            const name = row.cells[1].innerText; 
+            const diHoc = row.querySelector(".cb-dihoc").checked;
+            const nghiPhep = row.querySelector(".cb-nghiphep").checked;
+            // Lấy báo cáo từ biến tạm
+            const reportContent = tempReports[i] || "";
+
+            if (diHoc) countDiHoc++;
+            else countNghi++;
+
+            currentDetails.push({
+                name: name,
+                diHoc: diHoc,
+                nghiPhep: nghiPhep,
+                report: reportContent // Lưu báo cáo vào dữ liệu chính
+            });
+        });
+
+        const classData = {
+            ngay, tenLop, giaoVien,
+            siSo: rows.length,
+            diHoc: countDiHoc,
+            nghiHoc: countNghi,
+            chiTiet: currentDetails
+        };
+
+        if (editingIndex !== null) classes[editingIndex] = classData;
+        else classes.push(classData);
+
+        renderClassList();
+        toggleViews(true);
+    }
+
+    function renderClassList() {
+        const tbody = document.getElementById("classList");
+        tbody.innerHTML = "";
+        classes.forEach((cls, index) => {
+            const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${cls.ngay}</td>
+                    <td class="class-name" onclick="openClassDetail(${index})">${cls.tenLop}</td> 
+                    <td>${cls.giaoVien}</td>
+                    <td style="color:blue; font-weight:bold">${cls.diHoc}</td>
+                    <td style="color:red; font-weight:bold">${cls.nghiHoc}</td>
+                    <td>${cls.siSo}</td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML("beforeend", row);
+        });
+    }
+
+    function openClassDetail(index) {
+        const cls = classes[index];
+        editingIndex = index;
+        document.getElementById("formTitle").innerText = "Chỉnh sửa điểm danh";
+        document.getElementById("ngay").value = cls.ngay;
+        document.getElementById("tenLop").value = cls.tenLop;
+        document.getElementById("giaoVien").value = cls.giaoVien;
+        
+        toggleViews(false);
+        loadStudentTable(cls.chiTiet);
+    }
+    
+    function closeDetail() {
+        toggleViews(true);
+    }
+</script>
+
+</body>
+</html>
