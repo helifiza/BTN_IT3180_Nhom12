@@ -1,0 +1,231 @@
+Explanation: Replace corrupted / malformed file contents with a clean, well-formed HTML page that contains the original score table and its JS behavior.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng điểm</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            min-height: 100vh;
+            background-color: #f4f7fb;
+        }
+
+        .form-container, .table-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .form-container { display: none; width: 420px; }
+        .table-container { padding: 20px; }
+
+        .row { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+        .left { width:150px; font-weight:bold }
+        .right input, .right select, .right textarea { width:250px; padding:6px; border:1px solid #ccc; border-radius:5px; }
+
+        button { padding:8px 16px; margin-right:12px; background-color:#3EAEF4; color:white; border:none; border-radius:8px; cursor:pointer }
+        button:hover { opacity:0.9 }
+
+        table { width:100%; border-collapse:collapse; background:white; border-radius:8px; overflow:hidden }
+        table th, table td { border:1px solid #ccc; padding:8px 12px; text-align:left }
+        table th { background-color:#3EAEF4; color:white }
+    </style>
+</head>
+<body>
+
+    <div class="table-container" id="tableScore">
+        <h2>Bảng điểm</h2>
+        <table id="infoTable">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Họ tên</th>
+                    <th>Listening I</th>
+                    <th>Reading I</th>
+                    <th>Speaking I</th>
+                    <th>Writing I</th>
+                    <th>Listening II</th>
+                    <th>Reading II</th>
+                    <th>Speaking II</th>
+                    <th>Writing II</th>
+                    <th>Nhận xét 1</th>
+                    <th>Nhận xét 2</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="row" style="margin-top:16px">
+            <button id="access">Nhập điểm</button>
+        </div>
+    </div>
+
+    <div class="form-container" id="formScore">
+        <h2>Nhập điểm</h2>
+        <div class="row">
+            <div class="left">Học viên:</div>
+            <div class="right">
+                <select id="studentName"><option value="">Chọn học viên</option></select>
+            </div>
+        </div>
+        <div class="row"><div class="left">Listening</div><div class="right"><input type="number" id="listeningScore" min="0" max="10" step="0.5"></div></div>
+        <div class="row"><div class="left">Reading</div><div class="right"><input type="number" id="readingScore" min="0" max="10" step="0.5"></div></div>
+        <div class="row"><div class="left">Speaking</div><div class="right"><input type="number" id="speakingScore" min="0" max="10" step="0.5"></div></div>
+        <div class="row"><div class="left">Writing</div><div class="right"><input type="number" id="writingScore" min="0" max="10" step="0.5"></div></div>
+        <div class="row"><div class="left">Nhận xét</div><div class="right"><textarea id="comment" rows="4"></textarea></div></div>
+        <div class="row">
+            <button id="saveButton">Lưu</button>
+            <button id="cancelButton">Hủy</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            const accessButton = document.getElementById('access');
+            const formScore = document.getElementById('formScore');
+            const tableScore = document.getElementById('tableScore');
+            const saveButton = document.getElementById('saveButton');
+            const cancelButton = document.getElementById('cancelButton');
+            const studentNameSelect = document.getElementById('studentName');
+            const infoTableBody = document.querySelector('#infoTable tbody');
+
+            const students = [
+                { id: 1, name: "Nguyễn Văn A" },
+                { id: 2, name: "Trần Thị B" },
+                { id: 3, name: "Lê Văn C" },
+                { id: 4, name: "Phạm Thị D" }
+            ];
+
+            let scores = [
+                { stt: 1, name: "Nguyễn Văn A", listening1: 7.5, reading1: 8.0, speaking1: 7.0, writing1: 6.5, listening2: null, reading2: null, speaking2: null, writing2: null, comment1: "Học tốt.", comment2: null },
+                { stt: 2, name: "Trần Thị B", listening1: 6.0, reading1: 7.0, speaking1: 6.5, writing1: 7.0, listening2: null, reading2: null, speaking2: null, writing2: null, comment1: "Cần cải thiện.", comment2: null }
+            ];
+
+            function inputData(){
+                studentNameSelect.innerHTML = '<option value="">Chọn học viên</option>';
+                students.forEach(student =>{
+                    const option = document.createElement('option');
+                    option.value = student.id;
+                    option.textContent = student.name;
+                    studentNameSelect.appendChild(option);
+                });
+            }
+
+            function renderTable(){
+                infoTableBody.innerHTML = '';
+                scores.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.stt}</td>
+                        <td>${row.name}</td>
+                        <td>${row.listening1 !== null ? row.listening1 : ''}</td>
+                        <td>${row.reading1 !== null ? row.reading1 : ''}</td>
+                        <td>${row.speaking1 !== null ? row.speaking1 : ''}</td>
+                        <td>${row.writing1 !== null ? row.writing1 : ''}</td>
+                        <td>${row.listening2 !== null ? row.listening2 : ''}</td>
+                        <td>${row.reading2 !== null ? row.reading2 : ''}</td>
+                        <td>${row.speaking2 !== null ? row.speaking2 : ''}</td>
+                        <td>${row.writing2 !== null ? row.writing2 : ''}</td>
+                        <td>${row.comment1 !== null ? row.comment1 : ''}</td>
+                        <td>${row.comment2 !== null ? row.comment2 : ''}</td>
+                    `;
+                    infoTableBody.appendChild(tr);
+                });
+            }
+
+            function resetForm() {
+                studentNameSelect.value = '';
+                document.getElementById('listeningScore').value = '';
+                document.getElementById('readingScore').value = '';
+                document.getElementById('speakingScore').value = '';
+                document.getElementById('writingScore').value = '';
+                document.getElementById('comment').value = '';
+            }
+
+            accessButton.addEventListener('click', function(){
+                formScore.style.display = 'block';
+                tableScore.style.display = 'none';
+                inputData();
+                resetForm();
+            });
+
+            cancelButton.addEventListener('click', function(){
+                formScore.style.display = 'none';
+                tableScore.style.display = 'block';
+                resetForm();
+            });
+
+            saveButton.addEventListener('click', function(){
+                const studentId = studentNameSelect.value;
+                const studentName = studentNameSelect.options[studentNameSelect.selectedIndex]?.text || '';
+                const listening = parseFloat(document.getElementById('listeningScore').value);
+                const reading = parseFloat(document.getElementById('readingScore').value);
+                const speaking = parseFloat(document.getElementById('speakingScore').value);
+                const writing = parseFloat(document.getElementById('writingScore').value);
+                const comment = document.getElementById('comment').value.trim();
+
+                if(!studentId || isNaN(listening) || isNaN(reading) || isNaN(speaking) || isNaN(writing)){
+                    alert('Vui lòng chọn học viên và nhập đầy đủ điểm số hợp lệ.');
+                    return;
+                }
+
+                let studentFound = false;
+                for(let i = 0; i < scores.length; i++){
+                    if(scores[i].name === studentName){
+                        if(scores[i].listening1 !== null && scores[i].listening2 === null){
+                            scores[i].listening2 = listening;
+                            scores[i].reading2 = reading;
+                            scores[i].speaking2 = speaking;
+                            scores[i].writing2 = writing;
+                            scores[i].comment2 = comment;
+                        } else if (scores[i].listening1 === null) {
+                            scores[i].listening1 = listening;
+                            scores[i].reading1 = reading;
+                            scores[i].speaking1 = speaking;
+                            scores[i].writing1 = writing;
+                            scores[i].comment1 = comment;
+                        } else {
+                            scores[i].listening1 = listening;
+                            scores[i].reading1 = reading;
+                            scores[i].speaking1 = speaking;
+                            scores[i].writing1 = writing;
+                            scores[i].comment1 = comment;
+                            alert('Học viên đã có điểm lần 2. Điểm bạn vừa nhập đã ghi đè lên lần 1.');
+                        }
+                        studentFound = true;
+                        break;
+                    }
+                }
+
+                if(!studentFound){
+                    scores.push({ stt: scores.length + 1, name: studentName, listening1: listening, reading1: reading, speaking1: speaking, writing1: writing, listening2: null, reading2: null, speaking2: null, writing2: null, comment1: comment, comment2: null });
+                }
+
+                alert('Lưu điểm thành công');
+                formScore.style.display = 'none';
+                tableScore.style.display = 'block';
+                renderTable();
+                resetForm();
+            });
+
+            // Init
+            renderTable();
+        });
+    </script>
+
+</body>
+</html>
+            width: 250px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }        }            font-weight: bold;            width: 150px;
+        .left {        }            margin-bottom: 12px;            align-items: center;            display: flex;
+        .row {        }            overflow-x: auto;            box-sizing: border-box;            padding: 50px;            display: block; /* bảng hiển thị trước */            height: 100vh;            width: 100%;
+        .table-container {        }            z-index: 10;            display: none; /* ban đầu form ẩn */            width: 400px;            transform: translate(-50%, -50%);            left: 50%;            top: 50%;            position: fixed;        .form-container {

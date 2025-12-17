@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông tin học viên</title>
+    <style>
+        body {
+            font-family:'Courier New', Courier, monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex; 
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 0;
+            background-color: #f4f7fb;
+        }
+
+        .form-container, .table-container {
+            background: white;
+            padding: 50px 50px; 
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            display: none; /* ban đầu form hiển thị */
+            z-index: 10;
+        }
+
+        .table-container {
+            width: 100%;
+            height: 100vh;
+            display: block; /* bảng hiển thị trước */
+            padding: 50px; /* có thể chỉnh lại padding nếu muốn */
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .left {
+            width: 150px;
+            font-weight: bold;
+        }
+
+        .right input,
+        .right select {
+            width: 250px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin-right: 20px;
+            background-color: #3EAEF4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 8px 14px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #3EAEF4;
+            color: white;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="table-container" id="bangIn4">
+        <h2>Danh sách giáo viên</h2>
+        <table id="infoTable">
+            <thead>
+                <tr>
+                    <th>Họ tên</th>
+                    <th>Ngày sinh</th>
+                    <th>Giới tính</th>
+                    <th>Địa chỉ</th>
+                    <th>Điện thoại HV</th>
+                    <th>Email</th>
+                    <th>Ngày bắt đầu</th>
+                    <th>SĐT phụ huynh</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="row">
+            <br>
+                <button id="addInfo">Thêm</button>
+        </br>
+        </div>
+
+    </div>
+    
+    <div class="form-container" id="formContainer">
+        <h2>Nhập thông tin giáo viên</h2>
+
+        <div class="row">
+            <div class="left">Họ tên</div>
+            <div class="right"><input type="text" id="name"></div>
+        </div>
+
+        <div class="row">
+            <div class="left">Ngày sinh</div>
+            <div class="right"><input type="date" id="dob"></div>
+        </div>
+
+        <div class="row">
+            <div class="left">Giới tính</div>
+            <div class="right">
+                <select id="gender">
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="left">CCCD</div>
+            <div class="right"><input type="text" id="cccd"></div>
+        </div>
+
+        <div class="row">
+            <div class="left">Địa chỉ</div>
+            <div class="right"><input type="text" id="address"></div>
+        </div>
+
+        <div class="row">
+            <div class="left">Điện thoại HV</div>
+            <div class="right"><input type="number" id="phoneHV"></div>
+        </div>
+
+        <div class="row">
+            <div class="left">Email</div>
+            <div class="right">
+                <div class="right"><input type="email" id="email"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="left">Ngày bắt đầu</div>
+            <div class="right">
+                <div class="right"><input type="date" id="beginDate"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="left">Điện thoại PH</div>
+            <div class="right"><input type="number" id="phonePH"></div>
+        </div>
+
+        <div class="row">
+            <button id="save">Lưu</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("addInfo").onclick = function () {
+            // Ẩn bảng, hiện form
+            document.getElementById("bangIn4").style.display = "none";
+            document.getElementById("formContainer").style.display = "block";
+            };
+
+        document.getElementById("save").onclick = function () {
+            const hoTen = document.getElementById("name").value;
+            const ngaySinh = document.getElementById("dob").value;
+            const gioiTinh = document.getElementById("gender").value;
+            const diaChi = document.getElementById("address").value;
+            const dienThoaiHV = document.getElementById("phoneHV").value;
+            const email = document.getElementById("email").value;
+            const ngayBatDau = document.getElementById("beginDate").value;
+            const dienThoaiPH = document.getElementById("phonePH").value;
+
+            if (!hoTen || !ngaySinh || !gioiTinh || !diaChi || !ngayBatDau ) {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+            const table = document.getElementById("infoTable").getElementsByTagName("tbody")[0];
+            const newRow = table.insertRow();
+            newRow.insertCell(0).innerText = hoTen;
+            newRow.insertCell(1).innerText = ngaySinh;
+            newRow.insertCell(2).innerText = gioiTinh;
+            newRow.insertCell(3).innerText = diaChi;
+            newRow.insertCell(4).innerText = dienThoaiHV;
+            newRow.insertCell(5).innerText = email;
+            newRow.insertCell(6).innerText = ngayBatDau;
+            newRow.insertCell(7).innerText = dienThoaiPH;
+
+            const actionCell = newRow.insertCell(8);
+            const editButton = document.createElement("button");
+            editButton.innerText = "Sửa";
+            editButton.classList.add("edit-btn");
+            actionCell.appendChild(editButton);
+
+            // Sự kiện nút Sửa (tạm thời chỉ báo alert)
+            editButton.onclick = function () {
+                alert("Chức năng sửa sẽ được thêm sau!");
+            };
+
+            alert("Thêm thông tin thành công!");
+
+            // Ẩn form, hiện bảng
+            document.getElementById("formContainer").style.display = "none";
+            document.getElementById("bangIn4").style.display = "block";
+
+            document.querySelectorAll("#formContainer input, #formContainer select").forEach(el => el.value = "");
+        };
+    </script>
+
+</body>
+</html>
